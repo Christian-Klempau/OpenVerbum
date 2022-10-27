@@ -1,95 +1,110 @@
 import re
-from PyQt5.QtCore import QThread
 from threading import Thread
-import time
+import subprocess
+import os
+from .config import DURATION_MSG
+from typing import Callable
 
 
-def startswith(starter):
-    def func(string):
-        if not string.strip().startswith(starter):
-            return ""
-        return string
+CLIP_DURATION: float = 0
+
+
+def clip_duration_setter(value: float):
+    global CLIP_DURATION
+    CLIP_DURATION = value
+    return ""
+
+
+def process_startswith(starter: str, parser: Callable, signal):
+    def func(msg):
+        if not msg.strip().startswith(starter):
+            return
+
+        parsed_msg = parser(msg)
+        signal.emit(parsed_msg)
 
     return func
 
 
-def regex(regex):
-    def func(string):
-        match = re.match(regex, string)
-        if not match:
-            return ""
-        return match.group(0)
+def progress(string) -> int:
+    match = re.match(r"\[[^\]]*]", string)
+    if not match:
+        return 0
 
-    return func
+    string = match.group(0)
+    # strings look like this: [00:03.500 --> 00:04.500]
+    # we want only the second time (00:04.500)
+    # and convert it to seconds (60 * minutes + seconds, ignoring the ms)
+    remove = ("[", "]", "-->")
+    for char in remove:
+        string = string.replace(char, "")
+    string.strip()
+    string = string.split("  ")[1]
 
+    def format_to_seconds(time):
+        hours, seconds = time.split(":")
+        seconds = seconds.split(".")[0]
+        return 60 * int(hours) + int(seconds)
 
-FUNC_PAIRS = [
-    (
-        startswith("MoviePy - Writing audio in"),
-        lambda _: "Extracting audio...",
-    ),
-    (
-        startswith("MoviePy - Done"),
-        lambda _: "Done extracting audio",
-    ),
-    (
-        startswith("Detecting language:"),
-        lambda _: "Detecting language...",
-    ),
-    (
-        startswith("Detected language:"),
-        lambda x: x.lower().capitalize(),
-    ),
-    (
-        regex(r"\[[^\]]*]"),
-        lambda x: f"REGEX: {x}",
-    ),
-]
+    return format_to_seconds(string)
 
 
-class MyThread(Thread):
-    def run(self):
-        for i in range(10):
-            print(i)
-            time.sleep(1)
-
-
-class MetaData:
+class MetaData(Thread):
     def __init__(self, signals, file_path, file_type):
+        super().__init__(daemon=True)
         self.signals = signals
         self.file_path = file_path
         self.file_type = file_type
 
-        self.process()
+        self.processors = (
+            process_startswith(
+                "MoviePy - Writing audio in",
+                lambda: "Extracting audio...",
+                self.signals.process_info,
+            ),
+            process_startswith(
+                "Detecting language:",
+                lambda: "Detecting language...",
+                self.signals.process_info,
+            ),
+            process_startswith(
+                "Detected language:",
+                lambda x: x.lower().capitalize(),
+                self.signals.process_info,
+            ),
+            process_startswith(
+                DURATION_MSG,
+                lambda x: clip_duration_setter(float(x.split(":")[1].strip())),
+                self.signals.process_info,
+            ),
+        )
 
-    def process(self):
-        t = MyThread()
-        t.start()
-        # cmd = ["python", os.path.join("backend", "processor.py"), self.file_path, self.file_type]
+    def run(self):
 
-        # p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        # while p.stdout.readable():
-        #     line = p.stdout.readline()
+        cmd = [
+            "python",
+            "-u",
+            os.path.join("backend", "processor.py"),
+            self.file_path,
+            self.file_type,
+        ]
 
-        #     if not line:
-        #         break
+        self.signals.process_info.emit("Processing...")
 
-        #     print(line.strip())
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        for io in p.stdout:
+            self.handle_line(io)
 
-        # p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        # for io in p.stdout:
-        #     self.handle_line(io)
-
-        print("DONE!")
+        self.signals.process_info.emit("Done!")
 
     def handle_line(self, io):
         line: str = io.rstrip().decode("utf-8")
 
-        print("-->")
+        for processor in self.processors:
+            processor(line)
 
-        for detector, executor in FUNC_PAIRS:
-            found = detector(line)
-            if found:
-                result = executor(found)
-                print(result)
-                # self.signals.process_info.emit(result)
+        progress_made = progress(line)
+        if progress_made:
+            my_progress = int(progress_made / CLIP_DURATION * 100)
+            self.signals.advance_bar.emit(my_progress)
+            print(progress_made / CLIP_DURATION)

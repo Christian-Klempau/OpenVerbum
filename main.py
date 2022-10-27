@@ -24,7 +24,8 @@ class Backend:
             )
             return
 
-        MetaData(SIGNALS, file_path, file_type)
+        md = MetaData(SIGNALS, file_path, file_type)
+        md.start()
 
 
 if __name__ == "__main__":
@@ -38,5 +39,6 @@ if __name__ == "__main__":
     # back calling front
     SIGNALS.process_error.connect(window.handle_error)
     SIGNALS.process_info.connect(window.handle_info)
+    SIGNALS.advance_bar.connect(window.advance_bar)
 
     launch_ui(app, window)
