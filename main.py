@@ -39,6 +39,10 @@ if __name__ == "__main__":
     # back calling front
     SIGNALS.process_error.connect(window.handle_error)
     SIGNALS.process_info.connect(window.handle_info)
+
     SIGNALS.advance_bar.connect(window.advance_bar)
+
+    SIGNALS.process_started.connect(window.start_process)
+    SIGNALS.process_done.connect(window.finish_process)
 
     launch_ui(app, window)

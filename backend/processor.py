@@ -8,7 +8,6 @@ PATH = sys.argv[1]
 FILETYPE = sys.argv[2]
 
 
-# NOTE: this breaks PyQt5
 import moviepy.editor as mp
 
 

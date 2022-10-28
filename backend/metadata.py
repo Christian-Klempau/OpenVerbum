@@ -59,12 +59,12 @@ class MetaData(Thread):
         self.processors = (
             process_startswith(
                 "MoviePy - Writing audio in",
-                lambda: "Extracting audio...",
+                lambda _: "Extracting audio...",
                 self.signals.process_info,
             ),
             process_startswith(
                 "Detecting language:",
-                lambda: "Detecting language...",
+                lambda _: "Detecting language...",
                 self.signals.process_info,
             ),
             process_startswith(
@@ -89,13 +89,13 @@ class MetaData(Thread):
             self.file_type,
         ]
 
-        self.signals.process_info.emit("Processing...")
+        self.signals.process_started.emit()
 
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         for io in p.stdout:
             self.handle_line(io)
 
-        self.signals.process_info.emit("Done!")
+        self.signals.process_done.emit()
 
     def handle_line(self, io):
         line: str = io.rstrip().decode("utf-8")
@@ -107,4 +107,3 @@ class MetaData(Thread):
         if progress_made:
             my_progress = int(progress_made / CLIP_DURATION * 100)
             self.signals.advance_bar.emit(my_progress)
-            print(progress_made / CLIP_DURATION)

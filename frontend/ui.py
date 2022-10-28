@@ -10,7 +10,10 @@ class Signals(QObject):
     process_requested = pyqtSignal(str)
     process_error = pyqtSignal(str)
     process_info = pyqtSignal(str)
+
+    process_started = pyqtSignal()
     process_done = pyqtSignal()
+
     advance_bar = pyqtSignal(int)
 
 
@@ -66,6 +69,14 @@ class MainWindow(QWidget):
     def reset_info_labels(self):
         [info_label.setText("") for info_label in self.info_labels]
 
+    def block_buttons(self):
+        self.file_opener_button.setEnabled(False)
+        self.file_processor_button.setEnabled(False)
+
+    def unblock_buttons(self):
+        self.file_opener_button.setEnabled(True)
+        self.file_processor_button.setEnabled(True)
+
     def open_file(self):
         self.reset_info_labels()
         self.opened_file_label.setText(TEXT.NO_FILE_SELECTED)
@@ -93,8 +104,17 @@ class MainWindow(QWidget):
         set_text(self.info_label_first, f"{old_message}\n{message}", self.INFO_COLOR)
 
     def advance_bar(self, value: int):
-        print("ACA", value)
         self.progress.setValue(value)
+
+    def start_process(self):
+        self.handle_info("Processing...")
+        self.block_buttons()
+        self.progress.setValue(0)
+
+    def finish_process(self):
+        self.handle_info("Done!")
+        self.unblock_buttons()
+        self.progress.setValue(100)
 
 
 def create_ui() -> Tuple[QApplication, MainWindow]:
