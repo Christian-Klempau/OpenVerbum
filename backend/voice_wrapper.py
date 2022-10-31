@@ -1,8 +1,13 @@
+# Locals
+
+from backend.config import DURATION_MSG, ACCEPTED_FILE_TYPES
+from backend.utils import is_media_file, find_file_type
+
+# Libraries
 import re
 from threading import Thread
 import subprocess
 import os
-from .config import DURATION_MSG
 from typing import Callable
 
 
@@ -49,12 +54,9 @@ def progress(string) -> int:
     return format_to_seconds(string)
 
 
-class MetaData(Thread):
-    def __init__(self, signals, file_path, file_type):
-        super().__init__(daemon=True)
+class VoiceProcessor:
+    def __init__(self, signals):
         self.signals = signals
-        self.file_path = file_path
-        self.file_type = file_type
 
         self.processors = (
             process_startswith(
@@ -79,14 +81,26 @@ class MetaData(Thread):
             ),
         )
 
-    def run(self):
+    def process_file(self, file_path: str) -> None:
+        file_type = find_file_type(file_path)
+
+        if not is_media_file(file_path):
+            self.signals.process_error.emit(
+                f"File not supported (use {', '.join(ACCEPTED_FILE_TYPES)} files)"
+            )
+            return
+
+        transcription_task = Thread(target=self.run, daemon=True, args=(file_path, file_type))
+        transcription_task.start()
+
+    def run(self, file_path: str, file_type: str) -> None:
 
         cmd = [
             "python",
             "-u",
-            os.path.join("backend", "processor.py"),
-            self.file_path,
-            self.file_type,
+            os.path.join("backend", "voice_backend.py"),
+            file_path,
+            file_type,
         ]
 
         self.signals.process_started.emit()

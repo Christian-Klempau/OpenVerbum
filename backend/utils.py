@@ -1,5 +1,8 @@
-import mimetypes
+# Locals
 from backend.config import ACCEPTED_FILE_TYPES
+
+# Libraries
+import mimetypes
 
 mimetypes.init()
 
