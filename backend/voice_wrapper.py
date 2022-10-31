@@ -1,6 +1,6 @@
 # Locals
 
-from backend.config import DURATION_MSG, ACCEPTED_FILE_TYPES
+from backend.config import DURATION_MSG, ACCEPTED_FILE_TYPES, OUTPUT_FILE
 from backend.utils import is_media_file, find_file_type
 
 # Libraries
@@ -57,6 +57,7 @@ def progress(string) -> int:
 class VoiceProcessor:
     def __init__(self, signals):
         self.signals = signals
+        self.output_file = open(OUTPUT_FILE, "w")
 
         self.processors = (
             process_startswith(
@@ -109,7 +110,8 @@ class VoiceProcessor:
         for io in p.stdout:
             self.handle_line(io)
 
-        self.signals.process_done.emit()
+        self.signals.process_done.emit(OUTPUT_FILE)
+        self.output_file.close()
 
     def handle_line(self, io):
         line: str = io.rstrip().decode("utf-8")
@@ -119,5 +121,10 @@ class VoiceProcessor:
 
         progress_made = progress(line)
         if progress_made:
+            self.write_transcript(line)
             my_progress = int(progress_made / CLIP_DURATION * 100)
             self.signals.advance_bar.emit(my_progress)
+
+    def write_transcript(self, line: str):
+        line = line.split("]")[1].strip()
+        self.output_file.write(line + "\n")
