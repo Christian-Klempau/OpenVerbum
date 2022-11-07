@@ -1,6 +1,8 @@
-## Running
+<p align="center" style="background-color: #003364;">
 
-![Logo](https://i.imgur.com/hRfS8Q2.png)
+<img src="https://i.imgur.com/hRfS8Q2.png" alt="drawing" style="width:50%"/>
+</p>
+## Running
 
 You can use the [already built binaries](https://github.com/Christian-Klempau/OpenVerbum/tree/main/executables), just double click the file.
 
