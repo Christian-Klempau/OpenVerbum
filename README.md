@@ -1,6 +1,11 @@
-<p align="center" style="background-color: #003364;">
+<p align="center">
 
 <img src="https://i.imgur.com/hRfS8Q2.png" alt="drawing" style="width:50%"/>
+</p>
+</p>
+<p align="center" style="font-style: italic">
+Open Source GUI speech to text transcription software, based on OpenAi Whisper.<br>
+Automatic language detection, audio extraction from media files, and text generation. <br>
 </p>
 
 ## Running
@@ -39,7 +44,6 @@ There is a bug with `PyQt==5.15` and PyInstaller with the library `PyQt5.sip`. T
 - MacOS: TODO
 
 The built executable will be in `dist/OpenVerbum`.
-
 
 ## TODO: Make these executables
 
