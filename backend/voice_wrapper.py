@@ -1,15 +1,13 @@
 # Locals
-
-from backend.config import DURATION_MSG, ACCEPTED_FILE_TYPES, OUTPUT_FILE
-from backend.utils import is_media_file, find_file_type
-
-# Libraries
-import re
-from threading import Thread
-import subprocess
 import os
+import re
+import subprocess
+from threading import Thread
 from typing import Callable
 
+# Backend
+import backend.config as CONFIG
+from backend.utils import find_file_type, is_media_file
 
 CLIP_DURATION: float = 0
 
@@ -57,7 +55,6 @@ def progress(string) -> int:
 class VoiceProcessor:
     def __init__(self, signals):
         self.signals = signals
-        self.output_file = open(OUTPUT_FILE, "w")
 
         self.processors = (
             process_startswith(
@@ -76,7 +73,7 @@ class VoiceProcessor:
                 self.signals.process_info,
             ),
             process_startswith(
-                DURATION_MSG,
+                CONFIG.DURATION_MSG,
                 lambda x: clip_duration_setter(float(x.split(":")[1].strip())),
                 self.signals.process_info,
             ),
@@ -87,7 +84,7 @@ class VoiceProcessor:
 
         if not is_media_file(file_path):
             self.signals.process_error.emit(
-                f"File not supported (use {', '.join(ACCEPTED_FILE_TYPES)} files)"
+                f"File not supported (use {', '.join(CONFIG.ACCEPTED_FILE_TYPES)} files)"
             )
             return
 
@@ -107,24 +104,25 @@ class VoiceProcessor:
         self.signals.process_started.emit()
 
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        for io in p.stdout:
-            self.handle_line(io)
 
-        self.signals.process_done.emit(OUTPUT_FILE)
-        self.output_file.close()
+        with open(CONFIG.OUTPUT_FILE, "w") as output_file:
+            for line in p.stdout:
+                self.handle_line(output_file, line)
 
-    def handle_line(self, io):
-        line: str = io.rstrip().decode("utf-8")
+        self.signals.process_done.emit(CONFIG.OUTPUT_FILE)
+
+    def handle_line(self, output_file, line):
+        line: str = line.rstrip().decode("utf-8")
 
         for processor in self.processors:
             processor(line)
 
         progress_made = progress(line)
         if progress_made:
-            self.write_transcript(line)
+            self.write_transcript(output_file, line)
             my_progress = int(progress_made / CLIP_DURATION * 100)
             self.signals.advance_bar.emit(my_progress)
 
-    def write_transcript(self, line: str):
+    def write_transcript(self, output_file, line: str):
         line = line.split("]")[1].strip()
-        self.output_file.write(line + "\n")
+        output_file.write(line + "\n")

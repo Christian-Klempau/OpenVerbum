@@ -1,6 +1,8 @@
 media/
 __pycache__/
 .vscode/
+build/
+dist/
 
 *.pyc
 *.txt

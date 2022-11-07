@@ -1,5 +1,5 @@
 # Locals
-from backend.config import ACCEPTED_FILE_TYPES
+import backend.config as CONFIG
 
 # Libraries
 import mimetypes
@@ -20,7 +20,7 @@ def find_file_type(file_path) -> str:
 def is_media_file(file_path) -> bool:
     file_type = find_file_type(file_path)
 
-    if file_type not in ACCEPTED_FILE_TYPES:
+    if file_type not in CONFIG.ACCEPTED_FILE_TYPES:
         return False
 
     return True
