@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('backend/voice_backend.py', '.'), ('backend/config.py', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

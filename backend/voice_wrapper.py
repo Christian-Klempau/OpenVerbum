@@ -4,12 +4,33 @@ import re
 import subprocess
 from threading import Thread
 from typing import Callable
+import sys
 
 # Backend
 import backend.config as CONFIG
 from backend.utils import find_file_type, is_media_file
 
 CLIP_DURATION: float = 0
+
+
+def is_build() -> bool:
+    """
+    NOTE: Returns True if inside PyInstaller executable, else False
+    We need this because PyInstaller creates a temp folder and stores path in _MEIPASS
+    In that temp folder lives the voice_backend.py file and utils.py file
+    Normally (running as script, not as build), we just import it from backend/voice_backend.py
+    """
+    return hasattr(sys, "_MEIPASS")
+
+
+# https://stackoverflow.com/questions/56564441/best-way-to-call-subprocess-scripts-in-a-python-exe
+def resource_path(relative_path):
+
+    # sys._MEIPASS is the temp folder where PyInstaller stores the files
+    # when running as build, not as script
+    if is_build():
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 
 def clip_duration_setter(value: float):
@@ -93,10 +114,16 @@ class VoiceProcessor:
 
     def run(self, file_path: str, file_type: str) -> None:
 
+        # See the note at is_build()
+        voice_backend_path = (
+            resource_path("voice_backend.py")
+            if is_build()
+            else os.path.join("backend", "voice_backend.py")
+        )
         cmd = [
             "python",
             "-u",
-            os.path.join("backend", "voice_backend.py"),
+            voice_backend_path,
             file_path,
             file_type,
         ]
