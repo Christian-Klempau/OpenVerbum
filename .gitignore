@@ -3,6 +3,7 @@ __pycache__/
 .vscode/
 build/
 dist/
+logo/
 
 *.pyc
 *.txt

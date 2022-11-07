@@ -1,6 +1,8 @@
 ## Running
 
-You can use the already built binaries, just double click the file.
+![Logo](https://i.imgur.com/hRfS8Q2.png)
+
+You can use the [already built binaries](https://github.com/Christian-Klempau/OpenVerbum/tree/main/executables), just double click the file.
 
 You can execute the python script yourself. See [execute from source](#execute-from-source).
 
