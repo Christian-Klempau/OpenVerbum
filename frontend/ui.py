@@ -1,5 +1,13 @@
 # PyQt5 and related
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QFileDialog, QLabel, QProgressBar
+from PyQt5.QtWidgets import (
+    QApplication,
+    QWidget,
+    QPushButton,
+    QFileDialog,
+    QLabel,
+    QProgressBar,
+    QSizePolicy,
+)
 from PyQt5.QtCore import pyqtSignal, QObject
 
 # Material UI stylesheet
@@ -34,6 +42,7 @@ def set_text(label, text, color=CONFIG.COLOR_DEFAULT) -> QLabel:
     label.setText(text)
     label.setStyleSheet(f"color: {color};")
     label.adjustSize()
+    label.setScaledContents(True)
     return label
 
 
@@ -155,7 +164,7 @@ class MainWindow(QWidget):
             return
 
         self.file_processor_button.setEnabled(True)
-        self.opened_file_label.setText(self._get_file_name_and_ext(file_path))
+        set_text(self.opened_file_label, self._get_file_name_and_ext(file_path))
         self.current_file = file_path
 
     def _get_file_name_and_ext(self, file_path: str) -> str:
