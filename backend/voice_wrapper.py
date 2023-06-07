@@ -3,7 +3,7 @@ import os
 import re
 import subprocess
 from threading import Thread
-from typing import Callable
+from typing import Callable, Literal
 import sys
 
 # Backend
@@ -11,6 +11,8 @@ import backend.config as CONFIG
 from backend.utils import find_file_type, is_media_file
 
 CLIP_DURATION: float = 0
+
+VERBOSE = True
 
 
 def is_build() -> bool:
@@ -25,7 +27,6 @@ def is_build() -> bool:
 
 # https://stackoverflow.com/questions/56564441/best-way-to-call-subprocess-scripts-in-a-python-exe
 def resource_path(relative_path):
-
     # sys._MEIPASS is the temp folder where PyInstaller stores the files
     # when running as build, not as script
     if is_build():
@@ -100,7 +101,9 @@ class VoiceProcessor:
             ),
         )
 
-    def process_file(self, file_path: str) -> None:
+    def process_file(
+        self, file_path: str, language: str | None, task: Literal["transcribe", "translate"]
+    ) -> None:
         file_type = find_file_type(file_path)
 
         if not is_media_file(file_path):
@@ -109,11 +112,18 @@ class VoiceProcessor:
             )
             return
 
-        transcription_task = Thread(target=self.run, daemon=True, args=(file_path, file_type))
+        transcription_task = Thread(
+            target=self.run, daemon=True, args=(file_path, file_type, language, task)
+        )
         transcription_task.start()
 
-    def run(self, file_path: str, file_type: str) -> None:
-
+    def run(
+        self,
+        file_path: str,
+        file_type: str,
+        language: str | None,
+        task: Literal["transcribe", "translate"],
+    ) -> None:
         # See the note at is_build()
         voice_backend_path = (
             resource_path("voice_backend.py")
@@ -126,6 +136,8 @@ class VoiceProcessor:
             voice_backend_path,
             file_path,
             file_type,
+            language,
+            task,
         ]
 
         self.signals.process_started.emit()
@@ -134,6 +146,8 @@ class VoiceProcessor:
 
         with open(CONFIG.OUTPUT_FILE, "w") as output_file:
             for line in p.stdout:
+                if VERBOSE:
+                    print(line.decode("utf-8").rstrip())
                 self.handle_line(output_file, line)
 
         self.signals.process_done.emit(CONFIG.OUTPUT_FILE)

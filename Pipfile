@@ -4,11 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-whisper = {git = "https://github.com/openai/whisper.git"}
+openai-whisper = "*"
 qt-material = "*"
-pyqt5 = "==5.14"
+pyqt6 = "*"
+moviepy = "*"
+pyinstaller = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.10"
+python_version = "3.11"

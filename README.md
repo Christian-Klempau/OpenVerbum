@@ -8,6 +8,19 @@ Open Source GUI speech to text transcription software, based on OpenAi Whisper.<
 Automatic language detection, audio extraction from media files, and text generation. <br>
 </p>
 
+**Version: 0.1.1**
+
+- Linux: stable + binary
+- Windows: not tested
+- MacOS: not tested
+
+**Changelog:**
+- Updated to Python 3.11
+- Updated to PyQt 6
+- Choose Task: Added whisper translation support
+- Added manual language change support
+- Minor bugs fixed and UI improvements
+
 ## Running
 
 You can use the [already built binaries](https://github.com/Christian-Klempau/OpenVerbum/tree/main/executables), just double click the file.

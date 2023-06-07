@@ -1,0 +1,2 @@
+- live streaming of transcription
+- optimize program to run by chunks

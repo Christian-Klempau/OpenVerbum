@@ -2,9 +2,10 @@ from backend.voice_wrapper import VoiceProcessor
 
 from frontend.ui import create_ui, launch_ui
 
+import global_config as G_CONFIG
 
 if __name__ == "__main__":
-    app, window = create_ui()
+    app, window = create_ui(G_CONFIG)
     SIGNALS = window.signals
     backend = VoiceProcessor(SIGNALS)
 
